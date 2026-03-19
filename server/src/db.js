@@ -1,10 +1,7 @@
 import Database from 'better-sqlite3';
 import bcrypt from 'bcryptjs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
 
-const __dir = dirname(fileURLToPath(import.meta.url));
-const DB_PATH = join(__dir, '../../sf_desktop.db');
+const DB_PATH = '/app/sf_desktop.db';
 
 let _db;
 
