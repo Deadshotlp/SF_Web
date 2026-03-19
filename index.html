@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Windows Desktop</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Desktop -->
+  <div id="desktop" oncontextmenu="showContextMenu(event)" ondblclick="deselectAll()">
+
+    <!-- Desktop Icons -->
+    <!-- Desktop-Icons werden dynamisch von AppRegistry erstellt -->
+
+  </div>
+
+  <!-- Context Menu -->
+  <div id="context-menu" class="context-menu hidden">
+    <div class="context-item" onclick="changeWallpaper()">🖼️ Hintergrund ändern</div>
+    <div class="context-item" onclick="showInfo()">⚙️ Anzeigeeinstellungen</div>
+    <div class="context-divider"></div>
+    <div class="context-item" onclick="showInfo()">ℹ️ Über diesen PC</div>
+  </div>
+
+  <!-- ===== WINDOWS ===== -->
+  <!-- Fenster werden dynamisch von WindowManager erstellt -->
+
+  <!-- ===== TASKBAR ===== -->
+  <div id="taskbar">
+    <!-- Start Button -->
+    <button id="start-btn" onclick="toggleStartMenu()">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="0" y="0" width="8" height="8" rx="1" fill="#4fc3f7"/>
+        <rect x="10" y="0" width="8" height="8" rx="1" fill="#4fc3f7"/>
+        <rect x="0" y="10" width="8" height="8" rx="1" fill="#4fc3f7"/>
+        <rect x="10" y="10" width="8" height="8" rx="1" fill="#4fc3f7"/>
+      </svg>
+    </button>
+
+    <!-- Search Bar -->
+    <div id="search-bar" onclick="openSearch()">
+      <span>🔍</span>
+      <span class="search-text">Suchen</span>
+    </div>
+
+    <!-- Task View -->
+    <button class="taskbar-btn" title="Aufgabenansicht">⧉</button>
+
+    <!-- Pinned Apps -->
+    <div id="pinned-apps">
+      <button class="taskbar-app-btn" onclick="AppRegistry.open('settings')" title="Einstellungen">⚙️</button>
+    </div>
+
+    <!-- Running Apps (dynamically filled) -->
+    <div id="running-apps"></div>
+
+    <!-- System Tray -->
+    <div id="system-tray">
+      <button class="tray-btn" title="Netzwerk" onclick="toggleTrayPopup('net')">📶</button>
+      <button class="tray-btn" title="Lautstärke" onclick="toggleTrayPopup('vol')">🔊</button>
+      <button class="tray-btn" title="Akku" onclick="toggleTrayPopup('bat')">🔋</button>
+      <div id="clock-display">
+        <div id="clock-time">00:00</div>
+        <div id="clock-date">01.01.2026</div>
+      </div>
+      <button class="tray-btn notification-btn" title="Benachrichtigungen" onclick="toggleTrayPopup('notif')">🔔<span id="notif-badge" class="notif-badge">3</span></button>
+    </div>
+  </div>
+
+  <!-- ===== START MENU ===== -->
+  <div id="start-menu" class="hidden">
+    <div class="start-search">
+      <input type="text" placeholder="🔍 Apps, Einstellungen und Dokumente suchen..." id="start-search-input" oninput="filterStartApps(this.value)" />
+    </div>
+    <div class="start-section-title">Angeheftet</div>
+    <div class="start-apps" id="start-apps-grid">
+    <!-- Start-Apps werden dynamisch von AppRegistry erstellt -->
+    </div>
+    <div class="start-section-title">Empfohlen</div>
+    <div class="start-recommended">
+      <div class="rec-item"><span>📄</span><div><div>Bericht.docx</div><small>Zuletzt geöffnet</small></div></div>
+      <div class="rec-item"><span>📊</span><div><div>Tabelle.xlsx</div><small>Vor 2 Stunden</small></div></div>
+      <div class="rec-item"><span>📝</span><div><div>Notizen.txt</div><small>Gestern</small></div></div>
+      <div class="rec-item"><span>🖼️</span><div><div>Foto.png</div><small>Vorgestern</small></div></div>
+    </div>
+    <div class="start-footer">
+      <div class="start-user">
+        <div class="start-avatar">👤</div>
+        <span id="start-user-name">Benutzer</span>
+      </div>
+      <button class="power-btn" onclick="togglePowerMenu()">⏻</button>
+    </div>
+  </div>
+
+  <!-- Power Menu -->
+  <div id="power-menu" class="hidden">
+    <div class="power-item" onclick="alert('Ruhezustand...')">💤 Ruhezustand</div>
+    <div class="power-item" onclick="alert('Neu starten...')">🔄 Neu starten</div>
+    <div class="power-item" onclick="shutdownAnimation()">⏻ Herunterfahren</div>
+  </div>
+
+  <!-- Notification Panel -->
+  <div id="notif-panel" class="tray-popup hidden">
+    <div class="tray-popup-title">Benachrichtigungen</div>
+    <div class="notif-item">
+      <strong>🔄 Windows Update</strong>
+      <p>Updates sind verfügbar. Jetzt installieren?</p>
+      <small>Vor 10 Minuten</small>
+    </div>
+    <div class="notif-item">
+      <strong>🛡️ Windows-Sicherheit</strong>
+      <p>Ihr Gerät ist geschützt.</p>
+      <small>Vor 1 Stunde</small>
+    </div>
+    <div class="notif-item">
+      <strong>📧 Mail</strong>
+      <p>Sie haben 3 neue E-Mails.</p>
+      <small>Heute, 09:15</small>
+    </div>
+    <button class="clear-notif" onclick="clearNotifications()">Alle löschen</button>
+  </div>
+
+  <!-- Volume Panel -->
+  <div id="vol-panel" class="tray-popup hidden">
+    <div class="tray-popup-title">🔊 Lautstärke</div>
+    <div class="vol-control">
+      <span>🔈</span>
+      <input type="range" min="0" max="100" value="70" id="vol-slider" oninput="updateVol(this.value)" />
+      <span id="vol-val">70</span>
+    </div>
+    <div class="tray-popup-title" style="margin-top:10px;">🖥️ Helligkeit</div>
+    <div class="vol-control">
+      <span>🌑</span>
+      <input type="range" min="0" max="100" value="80" id="bright-slider" />
+      <span>🌕</span>
+    </div>
+  </div>
+
+  <!-- Network Panel -->
+  <div id="net-panel" class="tray-popup hidden">
+    <div class="tray-popup-title">📶 Netzwerk</div>
+    <div class="net-item active">
+      <span>📶</span>
+      <div>
+        <strong>Heimnetzwerk</strong><br>
+        <small>✅ Verbunden · Sicher</small>
+      </div>
+    </div>
+    <div class="net-item">
+      <span>📶</span>
+      <div>
+        <strong>Nachbar_WLAN</strong><br>
+        <small>🔒 Gesichert</small>
+      </div>
+    </div>
+    <div class="net-item">
+      <span>📶</span>
+      <div>
+        <strong>AndroidAP</strong><br>
+        <small>🔒 Gesichert</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Battery Panel -->
+  <div id="bat-panel" class="tray-popup hidden">
+    <div class="tray-popup-title">🔋 Akku – 87%</div>
+    <div class="bat-bar-wrap">
+      <div class="bat-bar"><div class="bat-fill" style="width:87%"></div></div>
+    </div>
+    <p style="text-align:center;margin:8px 0;font-size:13px;">⚡ Angeschlossen · Lädt</p>
+    <div class="vol-control">
+      <span>🐢</span>
+      <input type="range" min="0" max="3" value="1" step="1"/>
+      <span>⚡</span>
+    </div>
+    <small style="display:block;text-align:center;opacity:.7;">Energiemodus</small>
+  </div>
+
+  <!-- Search Panel -->
+  <div id="search-panel" class="hidden">
+    <input id="search-input" type="text" class="search-panel-input" placeholder="🔍 Suchen ..." autofocus oninput="updateSearch(this.value)" />
+    <div id="search-results"></div>
+  </div>
+
+  <!-- Shutdown Screen -->
+  <div id="shutdown-screen" class="hidden">
+    <div class="shutdown-content">
+      <div class="shutdown-circle">⏻</div>
+      <p>Wird heruntergefahren...</p>
+    </div>
+  </div>
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-brand">🪟 SF System</div>
+      <h2>Anmeldung</h2>
+      <p id="login-subtext">Nur eingetragene Mitarbeiter können sich anmelden.</p>
+
+      <label for="login-user">ID</label>
+      <select id="login-user" class="login-input"></select>
+
+      <label for="login-pin">Passwort</label>
+      <input id="login-pin" class="login-input" type="password" maxlength="24" placeholder="Passwort eingeben" />
+
+      <button id="login-submit" class="login-btn" onclick="attemptLogin()">Anmelden</button>
+      <div id="login-message" class="login-message"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/alasql@4.6.5/dist/alasql.min.js"></script>
+  <script src="apps.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
