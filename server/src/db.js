@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import bcrypt from 'bcryptjs';
 
-const DB_PATH = '/app/sf_desktop.db';
+const DB_PATH = process.env.DB_PATH || '/app/data/sf_desktop.db';
 
 let _db;
 
