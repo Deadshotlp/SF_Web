@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  sf-api:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+
+    container_name: sf-api
+
+    restart: unless-stopped
+
+    env_file:
+      - server/.env
+
+    ports:
+      - "127.0.0.1:3001:3001"
+
+    volumes:
+      - ./data/sf_desktop.db:/app/sf_desktop.db
+
+    environment:
+      - NODE_ENV=production
+      - TZ=Europe/Berlin
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
