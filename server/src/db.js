@@ -143,12 +143,23 @@ export async function initDatabase() {
       ('Vertraulich', 7),
       ('Geheim', 10)
   `);
+  db.exec(`INSERT OR IGNORE INTO authorization_levels (name, level)
+      VALUES
+        ('Offen', 1),
+        ('Intern', 3),
+        ('Vertraulich', 7),
+        ('Geheim', 10)
+    `);
 
   db.exec(`
     INSERT OR IGNORE INTO units (name)
     SELECT DISTINCT TRIM(unit_name) FROM strafakten
     WHERE unit_name IS NOT NULL AND TRIM(unit_name) <> ''
   `);
+  db.exec(`INSERT OR IGNORE INTO units (name)
+      SELECT DISTINCT TRIM(unit_name) FROM strafakten
+      WHERE unit_name IS NOT NULL AND TRIM(unit_name) <> ''
+    `);
 
   db.exec(`
     UPDATE strafakten
@@ -157,6 +168,12 @@ export async function initDatabase() {
     )
     WHERE unit_id IS NULL AND unit_name IS NOT NULL AND TRIM(unit_name) <> ''
   `);
+  db.exec(`UPDATE strafakten
+      SET unit_id = (
+        SELECT u.id FROM units u WHERE u.name = strafakten.unit_name
+      )
+      WHERE unit_id IS NULL AND unit_name IS NOT NULL AND TRIM(unit_name) <> ''
+    `);
 
   db.prepare('UPDATE staff SET unit_id = ? WHERE unit_id IS NULL').run(fallbackUnit.id);
   db.prepare('UPDATE strafakten SET unit_id = ? WHERE unit_id IS NULL').run(fallbackUnit.id);
@@ -169,6 +186,12 @@ export async function initDatabase() {
       ('Admin',      1, 1, 1, 1, 0, 7),
       ('User',       1, 0, 0, 0, 0, 1);
   `);
+  db.exec(`INSERT OR IGNORE INTO user_groups (name, can_read, can_edit, can_create, can_delete, can_manage_groups, auth_level)
+      VALUES
+        ('Superadmin', 1, 1, 1, 1, 1, 10),
+        ('Admin',      1, 1, 1, 1, 0, 7),
+        ('User',       1, 0, 0, 0, 0, 1)
+    `);
 
   db.exec(`
     UPDATE user_groups SET auth_level = CASE name
@@ -178,6 +201,12 @@ export async function initDatabase() {
       ELSE auth_level
     END
   `);
+  db.exec(`UPDATE user_groups SET auth_level = CASE name
+      WHEN 'Superadmin' THEN 10
+      WHEN 'Admin' THEN 7
+      WHEN 'User' THEN 1
+      ELSE auth_level
+    END`);
 
   // Standardbenutzer anlegen falls nicht vorhanden
   const existing = db.prepare("SELECT id FROM staff WHERE staff_id = 'A-1001'").get();
@@ -188,6 +217,9 @@ export async function initDatabase() {
       `INSERT INTO staff (staff_id, first_name, last_name, password_hash, image_url, rank_name, group_id, notes, login_enabled)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`
     ).run('A-1001', 'System', 'Admin', passwordHash, 'https://i.pravatar.cc/300?img=12', 'Leitung', superadmin.id, 'Initialer Systemzugang');
+    db.prepare(`INSERT INTO staff (staff_id, first_name, last_name, password_hash, image_url, rank_name, group_id, notes, login_enabled)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+      `).run('A-1001', 'System', 'Admin', passwordHash, 'https://i.pravatar.cc/300?img=12', 'Leitung', superadmin.id, 'Initialer Systemzugang');
   }
 
   // A-1001 immer als Superadmin sicherstellen
@@ -195,6 +227,7 @@ export async function initDatabase() {
     UPDATE staff SET group_id = (SELECT id FROM user_groups WHERE name = 'Superadmin')
     WHERE staff_id = 'A-1001'
   `).run();
+  db.prepare(`UPDATE staff SET group_id = (SELECT id FROM user_groups WHERE name = 'Superadmin') WHERE staff_id = 'A-1001'`).run();
 
   db.prepare(`
     UPDATE staff
@@ -203,4 +236,10 @@ export async function initDatabase() {
     )
     WHERE auth_level IS NULL OR auth_level < 1
   `).run();
+  db.prepare(`UPDATE staff
+      SET auth_level = (
+        SELECT auth_level FROM user_groups g WHERE g.id = staff.group_id
+      )
+      WHERE auth_level IS NULL OR auth_level < 1
+    `).run();
 }
