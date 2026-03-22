@@ -7,7 +7,7 @@ WORKDIR /app/server
 COPY server/package*.json ./
 
 # Dependencies installieren
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Restlichen Code kopieren
 COPY server ./
